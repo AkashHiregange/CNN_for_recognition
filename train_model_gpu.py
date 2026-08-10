@@ -190,8 +190,8 @@ def train_model(model, train_loader, val_loader, criterion, optimizer,model_name
             loss.backward()
             optimizer.step()
 
-            # Track training loss and accuracy
-            running_loss += loss.item() * images.size(0)  # loss.item() is the avg loss per batch
+            # Tracking training loss and accuracy
+            running_loss += loss.item() * images.size(0)  # loss.item() is the average loss per batch
             #_, predicted = torch.max(out.data, 1)
             #total_train += labels.size(0)
             acc_train_batch = (out.argmax(1) == labels).float().mean()

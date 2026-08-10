@@ -18,9 +18,7 @@ torch.manual_seed(SEED)
 if torch.cuda.is_available():
     torch.cuda.manual_seed_all(SEED)
 
-device = torch.device(
-    "cuda" if torch.cuda.is_available() else "cpu"
-)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 print("Using device:", device)
 
@@ -94,9 +92,7 @@ val_dl = DataLoader(val_data,batch_size=batch_size,shuffle=False)
 
 test_dl = DataLoader(test_data,batch_size=batch_size,shuffle=False)
 
-# --------------------------------------------------
-# 3. Fully connected neural network
-# --------------------------------------------------
+# implementing class for fully connected neural network
 
 class NeuralNetwork(nn.Module):
     def __init__(self, num_classes=3):
@@ -115,9 +111,8 @@ class NeuralNetwork(nn.Module):
             nn.ReLU(),
             nn.Dropout(0.3),
 
-            # Return logits, not softmax probabilities.
-            nn.Linear(128, num_classes)
-        )
+            # Returning logits and not softmax probabilities - I am still confused why this works!
+            nn.Linear(128, num_classes))
 
     def forward(self, x):
         return self.network(x)
@@ -127,43 +122,18 @@ model = NeuralNetwork(num_classes=3).to(device)
 
 print(model)
 
-num_params = sum(
-    p.numel() for p in model.parameters()
-    if p.requires_grad
-)
+# num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
 
-print(f"Trainable parameters: {num_params:,}")
+# print(f"Trainable parameters: {num_params=}")
 
-# --------------------------------------------------
-# 4. Loss and optimizer
-# --------------------------------------------------
 
 criterion = nn.CrossEntropyLoss()
 
-optimizer = torch.optim.Adam(
-    model.parameters(),
-    lr=0.0001,
-    weight_decay=5e-4
-)
+optimizer = torch.optim.Adam(model.parameters(),lr=0.0001,weight_decay=5e-4)
 
-# --------------------------------------------------
-# 5. Training and validation
-# --------------------------------------------------
 
-def train_model(
-    model,
-    train_loader,
-    val_loader,
-    criterion,
-    optimizer,
-    num_epochs=20
-):
-    history = {
-        "train_losses": [],
-        "train_accuracies": [],
-        "val_losses": [],
-        "val_accuracies": [],
-    }
+def train_model(model,train_loader,val_loader,criterion,optimizer,num_epochs=20):
+    history = {"train_losses": [],"train_accuracies": [],"val_losses": [],"val_accuracies": []}
 
     model.to(device)
 
@@ -189,9 +159,7 @@ def train_model(
             optimizer.step()
 
             running_loss += loss.item() * images.size(0)
-            correct += (
-                outputs.argmax(dim=1) == labels
-            ).sum().item()
+            correct += (outputs.argmax(dim=1) == labels).sum().item()
             total += labels.size(0)
 
         train_loss = running_loss / total
@@ -212,13 +180,9 @@ def train_model(
                 outputs = model(images)
                 loss = criterion(outputs, labels)
 
-                val_running_loss += (
-                    loss.item() * images.size(0)
-                )
+                val_running_loss += (loss.item() * images.size(0))
 
-                val_correct += (
-                    outputs.argmax(dim=1) == labels
-                ).sum().item()
+                val_correct += (outputs.argmax(dim=1) == labels).sum().item()
 
                 val_total += labels.size(0)
 
@@ -231,70 +195,33 @@ def train_model(
         history["val_accuracies"].append(val_acc)
 
         print(
-            f"Epoch [{epoch + 1}/{num_epochs}] "
-            f"| Train Loss: {train_loss:.4f} "
-            f"| Train Acc: {train_acc:.4f} "
-            f"| Val Loss: {val_loss:.4f} "
-            f"| Val Acc: {val_acc:.4f}"
-        )
+            f"Epoch [{epoch + 1}/{num_epochs}] | Train Loss: {train_loss:.4f} | Train Acc: {train_acc:.4f} | Val Loss: {val_loss:.4f} | Val Acc: {val_acc:.4f}")
 
     return history
 
 
-history = train_model(
-    model,
-    train_dl,
-    val_dl,
-    criterion,
-    optimizer,
-    num_epochs=20
-)
-
-# --------------------------------------------------
-# 6. Save model and training history
-# --------------------------------------------------
+history = train_model(model,train_dl,val_dl,criterion,optimizer,num_epochs=10)
 
 os.makedirs("results", exist_ok=True)
 
-torch.save(
-    model.state_dict(),
-    "results/pytorch_nn_state_dict.pth"
-)
+torch.save(model.state_dict(),"results/pytorch_nn_state_dict.pth")
 
-torch.save(
-    history,
-    "results/pytorch_nn_history.pt"
-)
+torch.save(history,"results/pytorch_nn_history.pt")
 
-# --------------------------------------------------
-# 7. Plot training and validation curves
-# --------------------------------------------------
 
 epochs = range(1, len(history["train_losses"]) + 1)
 
 fig, axes = plt.subplots(1, 2, figsize=(12, 4))
 
-axes[0].plot(
-    epochs, history["train_losses"],
-    label="Training loss"
-)
-axes[0].plot(
-    epochs, history["val_losses"],
-    label="Validation loss"
-)
+axes[0].plot(epochs, history["train_losses"],label="Training loss")
+axes[0].plot(epochs, history["val_losses"],label="Validation loss")
 axes[0].set_title("NN: Loss")
 axes[0].set_xlabel("Epoch")
 axes[0].set_ylabel("Loss")
 axes[0].legend()
 
-axes[1].plot(
-    epochs, history["train_accuracies"],
-    label="Training accuracy"
-)
-axes[1].plot(
-    epochs, history["val_accuracies"],
-    label="Validation accuracy"
-)
+axes[1].plot(epochs, history["train_accuracies"],label="Training accuracy")
+axes[1].plot(epochs, history["val_accuracies"],label="Validation accuracy")
 axes[1].set_title("NN: Accuracy")
 axes[1].set_xlabel("Epoch")
 axes[1].set_ylabel("Accuracy")
@@ -304,9 +231,8 @@ plt.tight_layout()
 plt.savefig("results/pytorch_nn_curves.png", dpi=150)
 plt.show()
 
-# --------------------------------------------------
-# 8. Evaluate on test data
-# --------------------------------------------------
+
+#ealuating on test data
 
 model.eval()
 
@@ -329,18 +255,12 @@ with torch.no_grad():
 
         predictions = outputs.argmax(dim=1)
 
-        test_correct += (
-            predictions == labels
-        ).sum().item()
+        test_correct += (predictions == labels).sum().item()
 
         test_total += labels.size(0)
 
-        all_predictions.extend(
-            predictions.cpu().numpy()
-        )
-        all_labels.extend(
-            labels.cpu().numpy()
-        )
+        all_predictions.extend(predictions.cpu().numpy())
+        all_labels.extend(labels.cpu().numpy())
 
 test_loss /= test_total
 test_accuracy = test_correct / test_total
@@ -348,36 +268,17 @@ test_accuracy = test_correct / test_total
 print(f"Test loss: {test_loss:.4f}")
 print(f"Test accuracy: {test_accuracy:.4f}")
 
-print(
-    classification_report(
-        all_labels,
-        all_predictions,
-        labels=[0, 1, 2],
-        target_names=train_data.class_names,
-        zero_division=0
-    )
-)
+print(classification_report(all_labels,all_predictions,labels=[0,1, 2], target_names=train_data.class_names,zero_division=0))
 
-# --------------------------------------------------
-# 9. Confusion matrix
-# --------------------------------------------------
 
-cm = confusion_matrix(
-    all_labels,
-    all_predictions,
-    labels=[0, 1, 2]
-)
+#confusion matrix
 
-disp = ConfusionMatrixDisplay(
-    confusion_matrix=cm,
-    display_labels=train_data.class_names
-)
+cm = confusion_matrix(all_labels,all_predictions,labels=[0, 1, 2])
+
+disp = ConfusionMatrixDisplay(confusion_matrix=cm,display_labels=train_data.class_names)
 
 disp.plot(cmap="Blues", values_format="d")
 plt.title("PyTorch NN - Test Confusion Matrix")
 plt.tight_layout()
-plt.savefig(
-    "results/pytorch_nn_confusion_matrix.png",
-    dpi=150
-)
+plt.savefig("results/pytorch_nn_confusion_matrix.png",dpi=150)
 plt.show()
