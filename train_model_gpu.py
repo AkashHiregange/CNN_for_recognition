@@ -11,11 +11,25 @@ from torchvision import datasets, transforms
 from torchvision.transforms import ToTensor
 from PIL import Image
 import torch.nn.functional as F
+#
+
+SEED = 123
+
+random.seed(SEED)
+np.random.seed(SEED)
+torch.manual_seed(SEED)
+
+if torch.cuda.is_available():
+    torch.cuda.manual_seed_all(SEED)
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+print("Using device:", device)
 
 class ImageDatasetFromFolders(Dataset):
     def __init__(self, path, transform=ToTensor):
         self.path = path
-        self.class_names = sorted(os.listdir(self.path))
+        self.class_names = ["Healthy", "Powdery", "Rust"]
         self.transform = transform
         complete_dataset = []
         for dir in os.listdir(self.path):

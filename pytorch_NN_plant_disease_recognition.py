@@ -9,10 +9,6 @@ from torchvision import transforms
 from PIL import Image
 from sklearn.metrics import classification_report,confusion_matrix,ConfusionMatrixDisplay
 
-# --------------------------------------------------
-# 1. Reproducibility
-# --------------------------------------------------
-
 SEED = 123
 
 random.seed(SEED)
@@ -28,123 +24,75 @@ device = torch.device(
 
 print("Using device:", device)
 
-# --------------------------------------------------
-# 2. Dataset
-# --------------------------------------------------
-
 base = os.getcwd()
 
 train_dir = os.path.join(base, "Train")
 val_dir = os.path.join(base, "Validation")
 test_dir = os.path.join(base, "Test")
 
-# Lower resolution to keep the fully connected
-# network computationally manageable.
+# lower resolution for now - testing purposes
 image_size = (64, 64)
 batch_size = 32
 
-# Match the 0-1 pixel scaling used by your CNN.
-transform = transforms.Compose([
-    transforms.Resize(image_size),
-    transforms.ToTensor(),
-])
+transform = transforms.Compose([transforms.Resize(image_size),transforms.ToTensor()])
 
 
 class ImageDatasetFromFolders(Dataset):
-    def __init__(self, path, transform=None):
+    def __init__(self, path, transform=ToTensor):
         self.path = path
-        self.transform = transform
-
-        # Explicit class order for all three datasets
         self.class_names = ["Healthy", "Powdery", "Rust"]
-        self.class_to_idx = {
-            name: idx
-            for idx, name in enumerate(self.class_names)
-        }
-
-        self.complete_dataset = []
-
-        for class_name in self.class_names:
-            class_dir = os.path.join(path, class_name)
-
-            if not os.path.isdir(class_dir):
-                raise FileNotFoundError(
-                    f"Missing class directory: {class_dir}"
-                )
-
-            for filename in sorted(os.listdir(class_dir)):
-                image_path = os.path.join(class_dir, filename)
-
-                if not os.path.isfile(image_path):
-                    continue
-
-                try:
-                    with Image.open(image_path) as img:
-                        if img.format not in [
-                            "JPEG", "PNG", "BMP", "TIFF", "WEBP"
-                        ]:
-                            continue
-                except Exception:
-                    continue
-
-                self.complete_dataset.append(
-                    (image_path, self.class_to_idx[class_name])
-                )
-
+        self.transform = transform
+        complete_dataset = []
+        for dir in os.listdir(self.path):
+            for image in os.listdir(os.path.join(self.path, dir)):
+                complete_dataset.append((dir, os.path.join(self.path, dir, image)))
+        self.complete_dataset = complete_dataset
+        
     def __len__(self):
         return len(self.complete_dataset)
-
-    def __getitem__(self, idx):
-        image_path, label = self.complete_dataset[idx]
-
-        with Image.open(image_path) as img:
-            image = img.convert("RGB")
-
+    
+    def get_example(self, idx):
+        img_path = self.complete_dataset[idx][1]
+        image = Image.open(img_path)
+        label = self.complete_dataset[idx][0]
+        label = self.class_names.index(label)
         if self.transform:
             image = self.transform(image)
-
+        return image, label
+    
+    def scale_image(self, img):
+        max_pixel = np.max(np.array(img))
+        img = img/max_pixel
+        return img
+    
+    def __getitem__(self, idx):
+        img_path = self.complete_dataset[idx][1]
+        image = Image.open(img_path)
+        label = self.complete_dataset[idx][0]
+#         print(label)
+        label = self.class_names.index(label)
+#         print(label)
+        if self.transform:
+            image = self.transform(image)
+#            image = self.scale_image(image)
         return image, label
 
-
-train_data = ImageDatasetFromFolders(
-    train_dir, transform
-)
-val_data = ImageDatasetFromFolders(
-    val_dir, transform
-)
-test_data = ImageDatasetFromFolders(
-    test_dir, transform
-)
+train_data = ImageDatasetFromFolders(train_dir, transform)
+val_data = ImageDatasetFromFolders(val_dir, transform)
+test_data = ImageDatasetFromFolders(test_dir, transform)
 
 print("Classes:", train_data.class_names)
 print("Training images:", len(train_data))
 print("Validation images:", len(val_data))
 print("Test images:", len(test_data))
 
-assert (
-    train_data.class_names
-    == val_data.class_names
-    == test_data.class_names
-)
+assert (train_data.class_names == val_data.class_names == test_data.class_names)
 
-train_dl = DataLoader(
-    train_data,
-    batch_size=batch_size,
-    shuffle=True
-)
+train_dl = DataLoader(train_data,batch_size=batch_size,shuffle=True, seed)
 
-# Do not shuffle evaluation datasets.
-val_dl = DataLoader(
-    val_data,
-    batch_size=batch_size,
-    shuffle=False
-)
+val_dl = DataLoader(val_data,batch_size=batch_size,shuffle=False)
 
-test_dl = DataLoader(
-    test_data,
-    batch_size=batch_size,
-    shuffle=False
-)
+test_dl = DataLoader(test_data,batch_size=batch_size,shuffle=False)
 
 # --------------------------------------------------
 # 3. Fully connected neural network
