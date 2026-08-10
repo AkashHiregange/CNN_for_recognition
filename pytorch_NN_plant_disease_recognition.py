@@ -7,6 +7,7 @@ from torch import nn
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from PIL import Image
+from torchvision.transforms import ToTensor
 from sklearn.metrics import classification_report,confusion_matrix,ConfusionMatrixDisplay
 
 SEED = 123
@@ -86,7 +87,7 @@ print("Test images:", len(test_data))
 
 assert (train_data.class_names == val_data.class_names == test_data.class_names)
 
-train_dl = DataLoader(train_data,batch_size=batch_size,shuffle=True, seed)
+train_dl = DataLoader(train_data,batch_size=batch_size,shuffle=True)
 
 val_dl = DataLoader(val_data,batch_size=batch_size,shuffle=False)
 
