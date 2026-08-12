@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import torch
 from time import perf_counter
 
-def train_model(model, train_loader, val_loader, criterion, optimizer, device, config, save_files=True, num_epochs=20):
+def train_model(model, train_loader, val_loader, criterion, optimizer, device, config, save_files=True, file_name='training', num_epochs=20):
 
     
     
@@ -80,8 +80,8 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, device, c
     print(f'\n Training time: {elapsed_time}')
     
     if save_files:
-        torch.save(model.state_dict(),f"{config.model_dir}/pytorch_nn_state_dict.pth")
-        torch.save(history,f"{config.model_dir}/pytorch_nn_history.pt")
+        torch.save(model.state_dict(),f"{config.model_dir}/{file_name}_state_dict.pth")
+        torch.save(history,f"{config.model_dir}/{file_name}_history.pt")
     return history, elapsed_time
 
 def test_model(model, test_loader, criterion, class_names, device, config, file_name='confusion_matrix', plot_confusion_matrix=True):
