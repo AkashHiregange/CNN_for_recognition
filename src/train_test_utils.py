@@ -4,8 +4,6 @@ import torch
 from time import perf_counter
 
 def train_model(model, train_loader, val_loader, criterion, optimizer, device, config, save_files=True, file_name='training', num_epochs=20):
-
-    
     
     history = {"train_losses": [],"train_accuracies": [],"val_losses": [],"val_accuracies": []}
 
@@ -129,7 +127,7 @@ def test_model(model, test_loader, criterion, class_names, device, config, file_
     print('--'*20)
     print('\n')
     
-    print(classification_report(all_labels,all_predictions,labels=[0,1, 2], target_names=class_names,zero_division=0))
+    classification_report = classification_report(all_labels,all_predictions,labels=[0,1, 2], target_names=class_names,zero_division=0))
     
     cm = confusion_matrix(all_labels,all_predictions,labels=[0, 1, 2])
 
@@ -144,4 +142,4 @@ def test_model(model, test_loader, criterion, class_names, device, config, file_
         plt.savefig(f"{config.plot_dir}/{file_name}.png",dpi=150)
         plt.show()
 
-    return test_loss, test_accuracy, all_predictions, all_labels, cm
+    return test_loss, test_accuracy, all_predictions, all_labels, cm, classification_report
