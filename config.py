@@ -8,9 +8,9 @@ class ProjectConfig:
     seed: int = 123
     test_size: float = 0.20
     cv_folds: int = 5
-    output_dir: Path = Path("artifacts")
-    plot_dir: Path = Path("reports/figures")
+    model_dir: Path = Path("results/models")
+    plot_dir: Path = Path("results/figures")
 
-#     def create_directories(self):
-#         self.output_dir.mkdir(parents=True, exist_ok=True)
-#         self.plot_dir.mkdir(parents=True, exist_ok=True)
+    def create_directories(self):
+        self.model_dir.mkdir(parents=True, exist_ok=True)
+        self.plot_dir.mkdir(parents=True, exist_ok=True)
